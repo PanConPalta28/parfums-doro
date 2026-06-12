@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parfums D'Oro</title>
+<style>
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#0b0b0b;color:#fff}
+header{background:linear-gradient(135deg,#111,#1d1d1d);padding:30px;text-align:center;border-bottom:2px solid #d4af37}
+.logo{font-size:42px;font-weight:700;color:#d4af37}
+.sub{color:#ccc}
+.container{max-width:1400px;margin:auto;padding:20px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+input,select{padding:12px;border-radius:10px;border:none;font-size:15px}
+input{flex:1;min-width:220px}
+.category{margin-bottom:20px;background:#151515;border-radius:14px;overflow:hidden}
+.category summary{cursor:pointer;padding:18px;color:#d4af37;font-size:22px;font-weight:bold}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;padding:20px}
+.card{background:#1b1b1b;border:1px solid #2e2e2e;border-radius:14px;overflow:hidden;transition:.3s}
+.card:hover{transform:translateY(-5px)}
+.card img{width:100%;height:300px;object-fit:cover;background:#222}
+.info{padding:15px}
+.brand{color:#bbb}
+.price{color:#d4af37;font-size:22px;font-weight:bold}
+.stock{color:#7CFC00;font-weight:bold}
+.out{color:#ff6666;font-weight:bold}
+.btn{display:block;text-align:center;text-decoration:none;background:#25D366;color:white;padding:12px;border-radius:10px;font-weight:bold;margin-top:10px}
+.badge{background:#d4af37;color:black;padding:4px 8px;border-radius:20px;font-size:12px}
+footer{text-align:center;padding:20px;color:#999}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">PARFUMS D'ORO</div>
+<div class="sub">Perfumes Árabes • Diseñador • Nicho</div>
+</header>
+
+<div class="container">
+<div class="controls">
+<input type="text" id="search" placeholder="Buscar perfume o marca...">
+<select id="filter">
+<option value="Todos">Todas las categorías</option>
+<option value="Árabe">Árabes</option>
+<option value="Diseñador">Diseñador</option>
+<option value="Nicho">Nicho</option>
+</select>
+</div>
+
+<div id="catalogo"></div>
+</div>
+
+<footer>© Parfums D'Oro</footer>
+
+<script>
+const API="https://script.google.com/macros/s/AKfycbzLQ7TSBej-B6ImFSnE__cBHOaYohh7KHCIQp1U7Mk47nrc7mHYYB6nfdkUuDsfgK_zgQ/exec";
+const WHATSAPP="51999999999";
+
+let perfumes=[];
+
+fetch(API)
+.then(r=>r.json())
+.then(data=>{
+ perfumes=data;
+ render();
+});
+
+document.getElementById("search").addEventListener("input",render);
+document.getElementById("filter").addEventListener("change",render);
+
+function render(){
+ const txt=document.getElementById("search").value.toLowerCase();
+ const catFilter=document.getElementById("filter").value;
+
+ let filtrados=perfumes.filter(p=>
+   (catFilter==="Todos" || p.categoria===catFilter) &&
+   (p.nombre.toLowerCase().includes(txt) || p.marca.toLowerCase().includes(txt))
+ );
+
+ const categorias={};
+ filtrados.forEach(p=>{
+   if(!categorias[p.categoria]) categorias[p.categoria]=[];
+   categorias[p.categoria].push(p);
+ });
+
+ let html='';
+
+ Object.keys(categorias).forEach(cat=>{
+   html+=`<details class="category" open>
+   <summary>${cat} (${categorias[cat].length})</summary>
+   <div class="grid">`;
+
+   categorias[cat].forEach(p=>{
+     const stock=p.stock>0?`<div class="stock">Disponible: ${p.stock}</div>`:`<div class="out">Agotado</div>`;
+     const msg=encodeURIComponent(`Hola, me interesa ${p.nombre} de ${p.marca}.`);
+
+     html+=`
+     <div class="card">
+      <img src="${p.imagen}" onerror="this.src='https://via.placeholder.com/400x400?text=Parfum';">
+      <div class="info">
+       <span class="badge">${p.categoria}</span>
+       <h3>${p.nombre}</h3>
+       <div class="brand">${p.marca}</div>
+       <div class="price">S/. ${p.precio}</div>
+       ${stock}
+       <a class="btn" target="_blank" href="https://wa.me/${WHATSAPP}?text=${msg}">Comprar por WhatsApp</a>
+      </div>
+     </div>`;
+   });
+
+   html+='</div></details>';
+ });
+
+ document.getElementById("catalogo").innerHTML=html;
+}
+</script>
+</body>
+</html>
